@@ -1,0 +1,6 @@
+[submodule "Itamotorino-esp32"]
+	path = Itamotorino-esp32
+	url = https://github.com/facens-omegabotz/Itamotorino-esp32.git
+[submodule "lib/Itamotorino-esp32"]
+	path = lib/Itamotorino
+	url = https://github.com/facens-omegabotz/Itamotorino-esp32.git
