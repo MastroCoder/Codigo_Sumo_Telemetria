@@ -9,7 +9,11 @@
 #define S4_BIT (1<<3)
 #define S5_BIT (1<<4)
 
-#define QTR1_BIT (1<<5)
-#define QTR2_BIT (1<<6)
+// Vão ser usados em diferentes eventgroups. É pra dar legal.
+
+#define QTR1_BIT (1<<0)
+#define QTR2_BIT (1<<1)
+
+#define QTR_COUNT 2
 
 #endif
