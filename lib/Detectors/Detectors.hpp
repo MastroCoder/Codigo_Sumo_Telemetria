@@ -19,12 +19,13 @@ class Detector {
     virtual void Detect() = 0;
 };
 
-class EnemyDetector : Detector {
+class EnemyDetector : public Detector {
   public:
+    EnemyDetector();
     void Detect() override; 
 };
 
-class LineDetector : Detector {
+class LineDetector : public Detector {
   private:
     QTRSensors qtr;
     uint16_t qtr_values[QTR_COUNT];

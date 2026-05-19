@@ -46,4 +46,9 @@ struct States {
   QTRState qtr_state {QTRState::kNone};
 };
 
+struct HallSensorReadings {
+  uint16_t hall_1_reading;
+  uint16_t hall_2_reading;
+};
+
 #endif

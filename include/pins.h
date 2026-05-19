@@ -17,4 +17,9 @@
 #define S4 26u
 #define S5 27u
 
+#define IR_PIN 13u
+
+#define H1 34u
+#define H2 35u
+
 #endif

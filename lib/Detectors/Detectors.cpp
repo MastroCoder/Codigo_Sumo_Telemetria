@@ -10,6 +10,12 @@ Detector::Detector(){
   event_group = xEventGroupCreate();
 }
 
+EnemyDetector::EnemyDetector(){
+  for (const auto &[sensor, _] : sensor_to_bit){
+    pinMode(sensor, INPUT);
+  }
+}
+
 void EnemyDetector::Detect(){
   for (const auto &[sensor, bit] : sensor_to_bit){
     if (digitalRead(sensor)) xEventGroupSetBits(event_group, bit);
