@@ -2,7 +2,7 @@
 #include <QTRSensors.h>
 #include "pins.h"
 #include "internal_defs.h"
-#include "types.hpp"
+#include "type_defs.hpp"
 #include "Detectors.hpp"
 #include "StateMachine.hpp"
 #include "Itamotorino.h"

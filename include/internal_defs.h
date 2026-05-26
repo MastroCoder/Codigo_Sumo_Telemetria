@@ -16,4 +16,7 @@
 
 #define QTR_COUNT 2
 
+#define API_URL "http://testurl:8080"
+#define MAX_HTTP_BUFFER 2048 
+
 #endif

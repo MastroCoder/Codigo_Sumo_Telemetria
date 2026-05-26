@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TYPES_HPP_
-#define INCLUDE_TYPES_HPP_
+#ifndef INCLUDE_TYPE_DEFS_HPP_
+#define INCLUDE_TYPE_DEFS_HPP_
 
 enum class RobotTask : unsigned char {
   kRunMatches = 0x42, // valor arbitrário por agora, pode ser algum botão esotérico no controle remoto
@@ -47,8 +47,8 @@ struct States {
 };
 
 struct HallSensorReadings {
-  uint16_t hall_1_reading;
-  uint16_t hall_2_reading;
+  short hall_1_reading;
+  short hall_2_reading;
 };
 
 #endif

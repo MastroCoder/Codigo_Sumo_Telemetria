@@ -1,7 +1,7 @@
 #ifndef LIB_STATE_MACHINE_HPP_
 #define LIB_STATE_MACHINE_HPP_
 
-#include "types.hpp"
+#include "type_defs.hpp"
 #include <Arduino.h>
 #include "pins.h"
 #include "internal_defs.h"

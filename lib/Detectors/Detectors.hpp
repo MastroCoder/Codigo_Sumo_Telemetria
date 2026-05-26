@@ -3,7 +3,7 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
-#include "types.hpp"
+#include "type_defs.hpp"
 #include <QTRSensors.h>
 #include <map>
 #include "pins.h"
