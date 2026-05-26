@@ -23,31 +23,42 @@ void FileHandler::Mount(){
   }
 }
 
-esp_err_t FileHandler::CreateFile(const char* file_name){
-  file = fopen(file_name, "w+");
+esp_err_t FileHandler::OpenFile(const char* file_name, const char* type){
+  char *full_name = (char *) calloc((strlen(file_name) + strlen(conf->base_path) + 2), sizeof(char));
+  if (full_name == NULL) return ESP_FAIL;
+  strcat(full_name, conf->base_path);
+  strcat(full_name, "/");
+  strcat(full_name, file_name);
+  file = fopen(full_name, type);
+  free(full_name);
   if (file == NULL) return ESP_FAIL;
   return ESP_OK;
 }
 
 esp_err_t FileHandler::Write(const char *fmt){
   if (file != NULL){
-    fprintf(file, "%s", fmt);
-    return ESP_OK;
+    if (fprintf(file, "%s", fmt) >= 0) return ESP_OK;
+    else return ESP_ERR_INVALID_STATE;
   }
   return ESP_ERR_NOT_FOUND;
 }
 
 esp_err_t FileHandler::ReadFile(char *buf, int len, long byte_to_read){
-  if (file == NULL) return ESP_FAIL;
-  fseek(file, byte_to_read, SEEK_SET);
-  fgets(buf, len, file);
-  Serial.println(buf);
-  return ESP_OK;
+  if (file != NULL){
+    fseek(file, byte_to_read, SEEK_SET);
+    if (fgets(buf, len, file) != NULL) return ESP_OK;
+    else return ESP_ERR_INVALID_STATE; 
+  }
+  return ESP_FAIL;
 }
 
-void FileHandler::CloseFile(){
-  fclose(file);
-  file = NULL;
+esp_err_t FileHandler::CloseFile(){
+  if (file != NULL) {
+    fclose(file);
+    file = NULL;
+    return ESP_OK;
+  }
+  return ESP_ERR_INVALID_STATE;
 }
 
 void FileHandler::Unmount(){

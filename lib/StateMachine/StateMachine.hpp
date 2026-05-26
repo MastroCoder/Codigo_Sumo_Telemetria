@@ -1,10 +1,8 @@
 #ifndef LIB_STATE_MACHINE_HPP_
 #define LIB_STATE_MACHINE_HPP_
 
-#include "type_defs.hpp"
+#include "GlobalDefs.hpp"
 #include <Arduino.h>
-#include "pins.h"
-#include "internal_defs.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
 #include <map>

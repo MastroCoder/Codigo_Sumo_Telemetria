@@ -3,13 +3,16 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
-#include "type_defs.hpp"
 #include <QTRSensors.h>
 #include <map>
-#include "pins.h"
-#include "internal_defs.h"
+#include <GlobalDefs.hpp>
 #include <Arduino.h>
 #include "NVSHandler.hpp"
+
+enum class QTRCalibrate : unsigned char {
+  kUseNVS,
+  kCalibrate
+};
 
 class Detector {
   public:

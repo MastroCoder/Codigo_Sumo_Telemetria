@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <QTRSensors.h>
-#include "pins.h"
-#include "internal_defs.h"
-#include "type_defs.hpp"
+#include "GlobalDefs.hpp"
 #include "Detectors.hpp"
 #include "StateMachine.hpp"
 #include "Itamotorino.h"
