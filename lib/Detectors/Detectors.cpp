@@ -29,8 +29,7 @@ LineDetector::LineDetector(){
 }
 
 // provavelmente deveria ter salvaguardas se chamarem a funcao mais de uma vez
-void LineDetector::Calibrate(QTRCalibrate option){
-  if (nvs.StartStorage(NVS_READWRITE) != ESP_OK) return;
+void LineDetector::Calibrate(QTRCalibrate option, NVSHandler &nvs){
   if (option == QTRCalibrate::kUseNVS){
     for (uint8_t i = 0; i < QTR_COUNT; i++){
       nvs.ReadUInt16(kMinOnKeys[i], &qtr.calibrationOn.minimum[i]);

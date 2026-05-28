@@ -22,6 +22,11 @@
 #define H1 34u
 #define H2 35u
 
+#define PWM_FREQ 1000
+#define PWM_RES 8
+#define PWM_CH1 1
+#define PWM_CH2 2
+
 #define STACK_DEPTH 10000u
 
 #define S1_BIT (1<<0)
@@ -54,6 +59,7 @@ enum class FightState : unsigned char {
 enum class Strategy : unsigned char {
   kSearchLeft = 0x3,
   kSearchRight,
+  kFollowEnemy,
 };
 
 enum class SensorState : unsigned char {
@@ -70,6 +76,18 @@ enum class QTRState : unsigned char {
   kRight,
   kBoth,
   kNone
+};
+
+enum class MotorSpeeds : unsigned char {
+  kReverseFast,
+  kReverseSlow,
+  kStopped,
+  kForwardSlow,
+  kForwardFast,
+  kLeftSlow,
+  kLeftFast,
+  kRightSlow,
+  kRightFast
 };
 
 struct States {

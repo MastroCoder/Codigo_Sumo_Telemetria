@@ -37,11 +37,11 @@ class LineDetector : public Detector {
     const char* kMaxOnKeys[QTR_COUNT] = {"max_on_1", "max_on_2"};
     const char* kMinOffKeys[QTR_COUNT] = {"min_off_1", "min_off_2"};
     const char* kMaxOffKeys[QTR_COUNT] = {"max_off_1", "max_off_2"};
-    NVSHandler nvs = NVSHandler("QTR"); // meio feio, não? Melhor definir um default e um pra usar bonitinho?
+    //NVSHandler *nvs;
 
   public:
     LineDetector();
-    void Calibrate(QTRCalibrate option);
+    void Calibrate(QTRCalibrate option, NVSHandler &nvs);
     void Detect() override;
 };
 
