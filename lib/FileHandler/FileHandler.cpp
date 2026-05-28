@@ -61,6 +61,16 @@ esp_err_t FileHandler::CloseFile(){
   return ESP_ERR_INVALID_STATE;
 }
 
+char* FileHandler::EncodeToBase64(char *src, int read_len){
+  size_t output_len;
+  mbedtls_base64_encode(NULL, 0, &output_len, (unsigned char*) src, read_len);
+  char* dst = (char*) malloc(sizeof(char) * output_len);
+  int err = mbedtls_base64_encode((unsigned char*) dst, output_len, &output_len, (unsigned char*) src, read_len);
+  if (err != 0) return NULL;
+  dst[output_len] = '\0';
+  return dst;
+}
+
 void FileHandler::Unmount(){
   esp_vfs_littlefs_unregister(conf->partition_label);
 }

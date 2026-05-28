@@ -5,6 +5,7 @@
 #include "StateMachine.hpp"
 #include "Itamotorino.h"
 #include "FileHandler.hpp"
+#include "NVSHandler.hpp"
 #include <freertos/FreeRTOS.h>
 #include <esp_littlefs.h>
 #include <IRremote.hpp>
@@ -16,9 +17,9 @@ LineDetector line_detector;
 StateMachine state_machine = StateMachine(&enemy_detector.event_group, &line_detector.event_group);
 
 const esp_vfs_littlefs_conf_t vfs_config = {
-  .base_path = "/",
+  .base_path = "/littlefs",
   .partition_label = "telemetry",
-  .format_if_mount_failed = true,
+  .format_if_mount_failed = false,
   .dont_mount = false
 };
 
