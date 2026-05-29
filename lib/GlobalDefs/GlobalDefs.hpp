@@ -97,9 +97,4 @@ struct States {
   SensorState sensor_state {SensorState::kNone};
   QTRState qtr_state {QTRState::kNone};
 };
-
-struct HallSensorReadings {
-  short hall_1_reading;
-  short hall_2_reading;
-};
 #endif
