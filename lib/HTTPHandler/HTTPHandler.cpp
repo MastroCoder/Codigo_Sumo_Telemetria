@@ -4,8 +4,11 @@ char* HTTPHandler::output_buffer;
 int HTTPHandler::output_len;
 
 HTTPHandler::HTTPHandler(esp_http_client_config_t *conf){
-  this->conf = conf;
-  this->conf->event_handler = EventHandler;
+  this->config = conf;
+  this->config->event_handler = EventHandler;
+  output_buffer[MAX_HTTP_OUTPUT_BUFFER + 1] = {0};
+  this->config->user_data = output_buffer;
+  client = esp_http_client_init(this->config);
 }
 
 esp_err_t HTTPHandler::EventHandler(esp_http_client_event_t *e){
@@ -69,4 +72,11 @@ esp_err_t HTTPHandler::EventHandler(esp_http_client_event_t *e){
       break;
   }
   return ESP_OK;
+}
+
+esp_err_t HTTPHandler::SendTelemetryData(char* base64_buf){
+  esp_http_client_set_method(client, HTTP_METHOD_POST);
+  esp_http_client_set_header(client, "Content-Type", "application/json");
+  esp_http_client_set_post_field(client, base64_buf, strlen(base64_buf));
+  return esp_http_client_perform(client);
 }
