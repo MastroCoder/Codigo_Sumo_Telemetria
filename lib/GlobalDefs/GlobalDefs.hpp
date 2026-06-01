@@ -27,7 +27,7 @@
 #define PWM_CH1 1
 #define PWM_CH2 2
 
-#define STACK_DEPTH 10000u
+#define MAX_STACK_DEPTH 10000u
 
 #define S1_BIT (1<<0)
 #define S2_BIT (1<<1)

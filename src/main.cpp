@@ -16,7 +16,7 @@
 #include <esp_littlefs.h>
 #include <IRremote.hpp>
 
-const char* round_number_key = "round_number";
+SemaphoreHandle_t motor_telemetry_semaphore = xSemaphoreCreateMutex();
 
 EnemyDetector enemy_detector = EnemyDetector();
 LineDetector line_detector = LineDetector();
@@ -38,8 +38,8 @@ esp_http_client_config_t http_config = {
   .query= "esp"
 };
 
-WiFiHandler wifi_handler;
-HTTPHandler http_handler;
+WiFiHandler wifi_handle;
+HTTPHandler http_handle;
 
 const esp_vfs_littlefs_conf_t vfs_config = {
   .base_path = "/littlefs",
@@ -65,7 +65,11 @@ void setup() {
     line_detector.Calibrate(QTRCalibrate::kCalibrate, qtr_info);
   }
   IrReceiver.begin(IR_PIN, true, LED_BUILTIN);
-  IrReceiver.enableIRIn();  
+  IrReceiver.enableIRIn();
+  
+  xTaskCreatePinnedToCore(SensorsTask, "sensor_task", 4096, NULL, 1, &sensing_task_handle, 0);
+  xTaskCreatePinnedToCore(MotorsTask, "motors_task", 2048, NULL, 1, &motor_task_handle, 1);
+  xTaskCreatePinnedToCore(TelemetryTask, "telemetry_task", MAX_STACK_DEPTH, NULL, 1, &telemetry_task_handle, 1);
 }
 
 void loop() {
@@ -84,41 +88,50 @@ void SensorsTask(void *pvParameters){
 
 void MotorsTask(void *pvParameters){
   for (;;){
-    if (state_machine.states.robot_task == RobotTask::kRunMatches &&
-        state_machine.states.fight_state == FightState::kFighting){
-      strategy_runner.RunStrategy(state_machine);
+    if (xSemaphoreTake(motor_telemetry_semaphore, pdMS_TO_TICKS(30))){
+      if (state_machine.states.robot_task == RobotTask::kRunMatches &&
+          state_machine.states.fight_state == FightState::kFighting){
+        strategy_runner.RunStrategy(state_machine);
+      }
+      if (state_machine.states.fight_state == FightState::kStop){
+        strategy_runner.SetMotors(MotorSpeeds::kStopped);
+        vTaskDelete(motor_task_handle);
+      }
+      xSemaphoreGive(motor_telemetry_semaphore);
     }
-    if (state_machine.states.fight_state == FightState::kStop){
-      strategy_runner.SetMotors(MotorSpeeds::kStopped);
-      vTaskDelete(motor_task_handle);
+    else{
+      Serial.println("Still blocked by write.");
     }
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 
 void TelemetryTask(void *pvParameters){
-  if (state_machine.states.robot_task == RobotTask::kRunMatches){
-    if (file_handle.file == NULL){
-      if (file_handle.OpenFile("data", "w+") == ESP_OK){
-        file_handle.Write("Timestamp,RPM,S1,S2,S3,S4,S5,QTR1,QTR2\n");
+  for (;;){
+    if (xSemaphoreTake(motor_telemetry_semaphore, pdMS_TO_TICKS(30))){
+      if (state_machine.states.robot_task == RobotTask::kRunMatches){
+        if (file_handle.file == NULL){
+          if (file_handle.OpenFile("data", "w+") == ESP_OK){
+            file_handle.Write("Timestamp,RPM,S1,S2,S3,S4,S5,QTR1,QTR2\n");
+          }
+        }
+        // funções para escrita
       }
     }
-    unsigned long timestamp = millis() - state_machine.start_time;
-    int rpm = 0;
-    EventBits_t sensor_bits = xEventGroupGetBits(enemy_detector.event_group);
-    EventBits_t qtr_bits = xEventGroupGetBits(line_detector.event_group);
-    char *buf = (char*)malloc(sizeof(char) * MAX_HTTP_BUFFER);
-    if (buf == NULL) return;
-    snprintf(buf, sizeof(timestamp), "%lu", timestamp); 
+    else{
+      Serial.println("Blocked by Motors Task");
+    }
+    vTaskDelay(pdMS_TO_TICKS(30));
   }
 }
 
 void FileSendTask(void *pvParameters){
   if (state_machine.states.robot_task == RobotTask::kSendData){
-    wifi_handler = WiFiHandler(&wifi_config);
-    if (wifi_handler.Connect() == ESP_OK){
-      http_handler = HTTPHandler(&http_config);
+    wifi_handle = WiFiHandler(&wifi_config);
+    if (wifi_handle.Connect() == ESP_OK){
+      http_handle = HTTPHandler(&http_config);
       char *buf = file_handle.EncodeFileToBase64();
-      if (http_handler.SendTelemetryData(buf) == ESP_OK) http_handler.EndSession();
+      if (http_handle.SendTelemetryData(buf) == ESP_OK) http_handle.EndSession();
     }
   }
 }
