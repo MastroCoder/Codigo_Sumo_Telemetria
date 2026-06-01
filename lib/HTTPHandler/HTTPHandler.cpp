@@ -3,12 +3,11 @@
 char* HTTPHandler::output_buffer;
 int HTTPHandler::output_len;
 
+HTTPHandler::HTTPHandler() = default;
+
 HTTPHandler::HTTPHandler(esp_http_client_config_t *conf){
   this->config = conf;
   this->config->event_handler = EventHandler;
-  output_buffer[MAX_HTTP_OUTPUT_BUFFER + 1] = {0};
-  this->config->user_data = output_buffer;
-  client = esp_http_client_init(this->config);
 }
 
 esp_err_t HTTPHandler::EventHandler(esp_http_client_event_t *e){
@@ -75,8 +74,26 @@ esp_err_t HTTPHandler::EventHandler(esp_http_client_event_t *e){
 }
 
 esp_err_t HTTPHandler::SendTelemetryData(char* base64_buf){
+  char res_buf[MAX_HTTP_OUTPUT_BUFFER + 1] = {0};
+  config->user_data = res_buf;
+  client = esp_http_client_init(config);
+  esp_http_client_set_url(client, "http://" API_URL "/post-round");
   esp_http_client_set_method(client, HTTP_METHOD_POST);
   esp_http_client_set_header(client, "Content-Type", "application/json");
   esp_http_client_set_post_field(client, base64_buf, strlen(base64_buf));
   return esp_http_client_perform(client);
+}
+
+esp_err_t HTTPHandler::CloseMatch(){
+  char res_buf[MAX_HTTP_OUTPUT_BUFFER + 1] = {0};
+  config->user_data = res_buf;
+  client = esp_http_client_init(config);
+  esp_http_client_set_url(client, "http://" API_URL "/close-current-match");
+  esp_http_client_set_method(client, HTTP_METHOD_POST);
+  esp_http_client_set_header(client, "Content-Type", "application/json");
+  return esp_http_client_perform(client);
+}
+
+void HTTPHandler::EndSession(){
+  esp_http_client_cleanup(client);
 }

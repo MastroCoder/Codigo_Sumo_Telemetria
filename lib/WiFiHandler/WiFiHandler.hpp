@@ -10,8 +10,8 @@
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 
-#define WIFI_SSID "Carlos"
-#define WIFI_PASS "Felipe@2025"
+#define WIFI_SSID ""
+#define WIFI_PASS ""
 #define MAX_RETRY 5
 
 #define WIFI_CONNECTED_BIT (1<<0)
@@ -25,8 +25,9 @@ class WiFiHandler{
     static void EventHandler(void *arg, esp_event_base_t e_base, 
                                 int32_t e_id, void *e_data);
   public:
+    WiFiHandler();
     WiFiHandler(wifi_config_t *conf);
-    void Connect();
+    esp_err_t Connect();
 };
 
 #endif

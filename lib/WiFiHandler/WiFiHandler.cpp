@@ -9,6 +9,8 @@ WiFiHandler::WiFiHandler(wifi_config_t *conf){
   wifi_events_handle = xEventGroupCreate();
 }
 
+WiFiHandler::WiFiHandler() = default;
+
 void WiFiHandler::EventHandler(void *arg, esp_event_base_t e_base,
                                   int32_t e_id, void *e_data){
   if (e_base == WIFI_EVENT){
@@ -32,7 +34,7 @@ void WiFiHandler::EventHandler(void *arg, esp_event_base_t e_base,
   return;
 }
 
-void WiFiHandler::Connect(){
+esp_err_t WiFiHandler::Connect(){
   wifi_events_handle = xEventGroupCreate();
 
   ESP_ERROR_CHECK(esp_netif_init());
@@ -67,9 +69,12 @@ void WiFiHandler::Connect(){
     * happened. */
   if (bits & WIFI_CONNECTED_BIT) {
     Serial.println("Connected!");
+    return ESP_OK;
   } else if (bits & WIFI_FAIL_BIT) {
     Serial.println("Not connected!");
+    return ESP_ERR_WIFI_NOT_CONNECT;
   } else {
-    Serial.println("AIIIIIIIIIIIIIII!");
+    Serial.println("An error has occurred.");
+    return ESP_FAIL;
   }
 }

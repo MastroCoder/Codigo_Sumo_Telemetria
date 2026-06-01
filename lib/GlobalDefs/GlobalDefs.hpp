@@ -42,7 +42,7 @@
 
 #define QTR_COUNT 2
 
-#define API_URL "http://testurl:8080"
+#define API_URL "http://0.0.0.0:5000"
 #define MAX_HTTP_BUFFER 2048 
 
 enum class RobotTask : unsigned char {

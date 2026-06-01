@@ -4,8 +4,8 @@ StrategyRunner::StrategyRunner(){
   motor_handle.setupADC(PWM_CH1, PWM_FREQ, PWM_RES, PWM_CH2, PWM_FREQ, PWM_RES);
 }
 
-void StrategyRunner::RunStrategy(Strategy &strat, StateMachine &state_machine){
-  switch (strat){
+void StrategyRunner::RunStrategy(StateMachine &state_machine){
+  switch (state_machine.states.strategy){
     case Strategy::kSearchLeft:
       SearchLeft(state_machine);
       break;
@@ -83,4 +83,8 @@ void StrategyRunner::FollowEnemy(StateMachine &state_machine){
       motor_handle.setSpeeds(speed.first, speed.second);
     }
   }
+}
+
+void StrategyRunner::SetMotors(MotorSpeeds m){
+  motor_handle.setSpeeds(speeds.at(m).first, speeds.at(m).second); 
 }

@@ -19,6 +19,7 @@ class StateMachine {
   
   public:
     States states;
+    unsigned long start_time;
     StateMachine(EventGroupHandle_t *detections_handle, EventGroupHandle_t *line_handle);
     void ResolveIRReceiver(uint16_t command);
     void UpdateState();

@@ -10,7 +10,8 @@ const std::map<uint16_t, FightState> command_to_fight_state = {
 
 const std::map<uint16_t, Strategy> command_to_strategy = {
   {static_cast<uint16_t>(Strategy::kSearchLeft), Strategy::kSearchLeft},
-  {static_cast<uint16_t>(Strategy::kSearchRight), Strategy::kSearchRight}
+  {static_cast<uint16_t>(Strategy::kSearchRight), Strategy::kSearchRight},
+  {static_cast<uint16_t>(Strategy::kFollowEnemy), Strategy::kFollowEnemy} 
 };
 
 const std::map<uint16_t, RobotTask> command_to_robot_task = {
@@ -18,9 +19,9 @@ const std::map<uint16_t, RobotTask> command_to_robot_task = {
   {static_cast<uint16_t>(RobotTask::kSendData), RobotTask::kSendData}
 };
 
-
 StateMachine::StateMachine(EventGroupHandle_t *detections_handle, EventGroupHandle_t *line_handle){
-  detections = detections_handle;  
+  detections = detections_handle;
+  start_time = 0;  
 }
 
 void StateMachine::ResolveIRReceiver(uint16_t command){
@@ -33,6 +34,9 @@ void StateMachine::ResolveIRReceiver(uint16_t command){
         default:
           if (states.fight_state == FightState::kStandby){
             states.fight_state = command_to_fight_state.find(command)->second;
+            if (states.fight_state == FightState::kFighting && start_time == 0){
+              start_time = millis();
+            }
           }
           break;
       } 

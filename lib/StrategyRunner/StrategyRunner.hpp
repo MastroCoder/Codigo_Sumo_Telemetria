@@ -28,7 +28,8 @@ class StrategyRunner {
 
   public:
     StrategyRunner();
-    void RunStrategy(Strategy &strat, StateMachine &state_machine);
+    void RunStrategy(StateMachine &state_machine);
+    void SetMotors(MotorSpeeds m);
 };
 
 #endif

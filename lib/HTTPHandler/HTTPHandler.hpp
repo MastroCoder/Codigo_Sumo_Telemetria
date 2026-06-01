@@ -22,8 +22,11 @@ class HTTPHandler {
     esp_http_client_handle_t client;
 
   public:
+    HTTPHandler();
     HTTPHandler(esp_http_client_config_t *c);
     esp_err_t SendTelemetryData(char *base64_buf);
+    esp_err_t CloseMatch();
+    void EndSession();
 };
 
 #endif
