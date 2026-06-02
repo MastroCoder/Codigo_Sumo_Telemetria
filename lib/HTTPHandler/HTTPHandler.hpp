@@ -1,6 +1,7 @@
 #ifndef LIB_HTTP_HANDLER_HPP_
 #define LIB_HTTP_HANDLER_HPP_
 
+#include <Arduino.h>
 #include "GlobalDefs.hpp"
 #include "esp_http_client.h"
 #include <ctype.h>
@@ -8,7 +9,6 @@
 #include "esp_event.h"
 #include "esp_tls.h"
 #include "esp_system.h"
-#include <Arduino.h>
 
 #define MAX_HTTP_RECV_BUFFER 512
 #define MAX_HTTP_OUTPUT_BUFFER 2048
