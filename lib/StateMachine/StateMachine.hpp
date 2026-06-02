@@ -12,8 +12,8 @@ class StateMachine {
   private:
     EventBits_t detection_bits;
     EventBits_t line_bits;
-    EventGroupHandle_t *detections;
-    EventGroupHandle_t *line;
+    EventGroupHandle_t detections = nullptr;
+    EventGroupHandle_t line = nullptr;
     void UpdateSensorState();
     void UpdateQTRState();
   
@@ -21,7 +21,7 @@ class StateMachine {
     States states;
     unsigned long start_time;
     StateMachine() = default;
-    StateMachine(EventGroupHandle_t *detections_handle, EventGroupHandle_t *line_handle);
+    StateMachine(EventGroupHandle_t detections_handle, EventGroupHandle_t line_handle);
     void ResolveIRReceiver(uint16_t command);
     void UpdateState();
 };

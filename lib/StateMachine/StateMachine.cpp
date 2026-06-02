@@ -19,7 +19,7 @@ const std::map<uint16_t, RobotTask> command_to_robot_task = {
   {static_cast<uint16_t>(RobotTask::kSendData), RobotTask::kSendData}
 };
 
-StateMachine::StateMachine(EventGroupHandle_t *detections_handle, EventGroupHandle_t *line_handle){
+StateMachine::StateMachine(EventGroupHandle_t detections_handle, EventGroupHandle_t line_handle){
   detections = detections_handle;
   line=line_handle;
   start_time = 0; 
@@ -33,6 +33,7 @@ void StateMachine::ResolveIRReceiver(uint16_t command){
       switch (command_to_fight_state.find(command)->second){
         case FightState::kStop:
           states.fight_state = FightState::kStop;
+          states.robot_task = RobotTask::kSendData;
           break;
         default:
           if (states.fight_state == FightState::kStandby){
@@ -56,6 +57,8 @@ void StateMachine::ResolveIRReceiver(uint16_t command){
 
 // Talvez isso deevesse ser feito com interrupts? Interrompe, faz, depois volta à escrita de logs.
 void StateMachine::UpdateSensorState(){
+  if (detections == nullptr) return;
+  
   detection_bits = xEventGroupWaitBits(detections, sensor_bits, pdFALSE, pdTRUE, pdMS_TO_TICKS(5));
 
   switch (detection_bits) {
@@ -81,6 +84,7 @@ void StateMachine::UpdateSensorState(){
 }
 
 void StateMachine::UpdateQTRState(){
+  if (line == nullptr) return;
 
   line_bits = xEventGroupWaitBits(line, QTR1_BIT | QTR2_BIT, pdFALSE, pdTRUE, pdMS_TO_TICKS(5));
 

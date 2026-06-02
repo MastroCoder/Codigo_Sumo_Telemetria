@@ -10,7 +10,7 @@
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 
-#define WIFI_SSID ""
+#define WIFI_SSID "CELULAR FELIPE"
 #define WIFI_PASS ""
 #define MAX_RETRY 5
 

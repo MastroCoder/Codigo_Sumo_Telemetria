@@ -66,8 +66,9 @@ char* FileHandler::EncodeFileToBase64(){
   long file_size = ftell(file);
   fseek(file, 0, SEEK_SET);
   char* start_buffer = (char*) malloc((file_size + 1)*sizeof(char));
-  ReadFile(start_buffer, file_size, 0); // eu acho que vai dar certo, mas dá pra trocar por fread(start_buffer, file_size, 1, file);
-
+  fread(start_buffer, file_size, 1, file);
+  Serial.println(start_buffer);
+  //ReadFile(start_buffer, file_size, 0); // eu acho que vai dar certo, mas dá pra trocar por fread(start_buffer, file_size, 1, file);
   size_t output_len;
   mbedtls_base64_encode(NULL, 0, &output_len, (unsigned char*)start_buffer, file_size); // define tamanho necessário para encoding em output_len
   char* dst = (char*) malloc(sizeof(char)*output_len);

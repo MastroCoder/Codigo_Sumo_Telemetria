@@ -5,10 +5,10 @@ volatile unsigned char HallSensorHandler::count_right;
 
 HallSensorHandler::HallSensorHandler(){
   // H1 e H2, se nos GPIOs 34 e 35, necessitam de pullup externo.
-  //pinMode(H1, INPUT);
+  pinMode(H1, INPUT);
   pinMode(H2, INPUT);
 
-  //attachInterrupt(H1, IncrementLeft, RISING);
+  attachInterrupt(H1, IncrementLeft, RISING);
   attachInterrupt(H2, IncrementRight, RISING);
   start_time = 0;
 }
@@ -24,6 +24,10 @@ void IRAM_ATTR HallSensorHandler::IncrementRight(){
 std::pair<unsigned int, unsigned int> HallSensorHandler::CalculateRPM(long state_machine_start_time){
   std::pair<unsigned int, unsigned int> rpm_measurements;
   if (start_time == 0) start_time = state_machine_start_time;
+  Serial.print("count_left: ");
+  Serial.println(count_left);
+  Serial.print("count_right: ");
+  Serial.println(count_right);
   unsigned long time_diff = millis() - start_time;
   start_time = millis();
   if (time_diff > 0){
