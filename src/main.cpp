@@ -19,10 +19,10 @@
 
 SemaphoreHandle_t motor_telemetry_semaphore = xSemaphoreCreateMutex();
 
-EnemyDetector enemy_detector = EnemyDetector();
-LineDetector line_detector = LineDetector();
-StateMachine state_machine = StateMachine(&enemy_detector.event_group, &line_detector.event_group);
-StrategyRunner strategy_runner = StrategyRunner();
+EnemyDetector enemy_detector;
+LineDetector line_detector;
+StateMachine state_machine;
+StrategyRunner strategy_runner;
 HallSensorHandler hall_handler = HallSensorHandler();
 
 wifi_sta_config_t sta_config = {
@@ -70,16 +70,25 @@ esp_err_t PutEventBitsInBuffer(char **buf, EventBits_t bits, unsigned int size, 
 esp_err_t PutAllDataInBuffer(char **buf);
 
 void setup() {
+  Serial.begin(115200);
+  while (!Serial) {;}
   disableCore0WDT();
   disableCore1WDT();
+  Serial.println("Disabled core watchdogs");
+  state_machine = StateMachine(&enemy_detector.event_group, &line_detector.event_group);
+  Serial.println("Started detectors");
+  Serial.println("Started strategy runner and hall sensor handler");
+  
   if (qtr_info.StartStorage(NVS_READWRITE) == ESP_OK){
     line_detector.Calibrate(QTRCalibrate::kCalibrate, qtr_info);
   }
+
+  Serial.println("Calibrated sensors");
   IrReceiver.begin(IR_PIN, true, LED_BUILTIN);
   IrReceiver.enableIRIn();
   
-  xTaskCreatePinnedToCore(SensorsTask, "sensor_task", 4096, NULL, 1, &sensing_task_handle, 0);
-  xTaskCreatePinnedToCore(MotorsTask, "motors_task", 2048, NULL, 1, &motor_task_handle, 1);
+  xTaskCreatePinnedToCore(SensorsTask, "sensor_task", MAX_STACK_DEPTH, NULL, 1, &sensing_task_handle, 0);
+  xTaskCreatePinnedToCore(MotorsTask, "motors_task", MAX_STACK_DEPTH, NULL, 1, &motor_task_handle, 1);
   xTaskCreatePinnedToCore(TelemetryTask, "telemetry_task", MAX_STACK_DEPTH, NULL, 1, &telemetry_task_handle, 1);
 }
 
@@ -89,11 +98,14 @@ void loop() {
 void SensorsTask(void *pvParameters){
   for (;;){
     if (IrReceiver.decode()){
+      IrReceiver.resume();
       state_machine.ResolveIRReceiver(IrReceiver.decodedIRData.command);
     }
-    enemy_detector.Detect();
-    line_detector.Detect();
-    state_machine.UpdateState();
+    if (state_machine.states.fight_state == FightState::kFighting){
+      enemy_detector.Detect();
+      line_detector.Detect();
+      state_machine.UpdateState();
+    }
   }
 }
 
@@ -124,7 +136,7 @@ void TelemetryTask(void *pvParameters){
           state_machine.states.fight_state == FightState::kFighting){
         if (file_handle.file == NULL){
           if (file_handle.OpenFile("data", "w+") == ESP_OK){
-            file_handle.Write("Timestamp,RPM1,RPM2,S1,S2,S3,S4,S5,QTR1,QTR2\n");
+            file_handle.Write("Timestamp,RPM1,RPM2,S1,S2,S3,S4,QTR1,QTR2\n");
           }
         }
         // funções para escrita

@@ -1,6 +1,6 @@
 #include "StateMachine.hpp"
 
-constexpr EventBits_t sensor_bits = S1_BIT | S2_BIT | S3_BIT | S4_BIT | S5_BIT;
+constexpr EventBits_t sensor_bits = S1_BIT | S2_BIT | S3_BIT | S4_BIT;
 
 const std::map<uint16_t, FightState> command_to_fight_state = {
   {static_cast<uint16_t>(FightState::kStandby), FightState::kStandby}, 
@@ -21,11 +21,14 @@ const std::map<uint16_t, RobotTask> command_to_robot_task = {
 
 StateMachine::StateMachine(EventGroupHandle_t *detections_handle, EventGroupHandle_t *line_handle){
   detections = detections_handle;
-  start_time = 0;  
+  line=line_handle;
+  start_time = 0; 
 }
 
 void StateMachine::ResolveIRReceiver(uint16_t command){
   if (states.robot_task == RobotTask::kRunMatches){
+    Serial.print("Command: ");
+    Serial.println(command);
     if (command_to_fight_state.find(command) != command_to_fight_state.end()){
       switch (command_to_fight_state.find(command)->second){
         case FightState::kStop:
@@ -39,7 +42,8 @@ void StateMachine::ResolveIRReceiver(uint16_t command){
             }
           }
           break;
-      } 
+      }
+      Serial.println(static_cast<uint16_t>(states.fight_state)); 
     }
     else if (command_to_strategy.find(command) != command_to_strategy.end()){
       if (states.fight_state == FightState::kStandby) states.strategy = command_to_strategy.find(command)->second;
@@ -52,27 +56,24 @@ void StateMachine::ResolveIRReceiver(uint16_t command){
 
 // Talvez isso deevesse ser feito com interrupts? Interrompe, faz, depois volta à escrita de logs.
 void StateMachine::UpdateSensorState(){
-  detection_bits = xEventGroupGetBits(detections);
+  detection_bits = xEventGroupWaitBits(detections, sensor_bits, pdFALSE, pdTRUE, pdMS_TO_TICKS(5));
 
   switch (detection_bits) {
-    case 0b00100:
-    case 0b01110:
+    case 0b0010:
+    case 0b0110:
+    case 0b0100:
       states.sensor_state = SensorState::kFront;
       break;
-    case 0b00111:
-    case 0b00110:
+    case 0b0011:
       states.sensor_state = SensorState::kFrontLeft;
       break;
-    case 0b01100:
-    case 0b11100:
+    case 0b1100:
       states.sensor_state = SensorState::kFrontRight;
       break;
-    case 0b00011:
-    case 0b00001:
+    case 0b0001:
       states.sensor_state = SensorState::kLeft;
       break;
-    case 0b11000:
-    case 0b10000:
+    case 0b1000:
       states.sensor_state = SensorState::kRight;
     default:
       break;
@@ -80,7 +81,8 @@ void StateMachine::UpdateSensorState(){
 }
 
 void StateMachine::UpdateQTRState(){
-  line_bits = xEventGroupGetBits(line);
+
+  line_bits = xEventGroupWaitBits(line, QTR1_BIT | QTR2_BIT, pdFALSE, pdTRUE, pdMS_TO_TICKS(5));
 
   switch (line_bits){
     case 0b01:

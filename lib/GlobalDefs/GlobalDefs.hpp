@@ -1,26 +1,25 @@
 #ifndef LIB_GLOBAL_DEFS_HPP_
 #define LIB_GLOBAL_DEFS_HPP_
 
-#define QTR1 17u
-#define QTR2 18u
+#define QTR1 36u
+#define QTR2 39u
 
 #define PWMA 4u
-#define PWMB 23u
-#define AIN1 18u
-#define AIN2 5u
-#define BIN1 19u
-#define BIN2 21u
+#define PWMB 21u
+#define AIN1 16u
+#define AIN2 22u
+#define BIN1 23u
+#define BIN2 5u
 
 #define S1 32u
 #define S2 33u
 #define S3 25u
-#define S4 26u
-#define S5 27u
+#define S4 27u
 
-#define IR_PIN 13u
+#define IR_PIN 17u
 
 #define H1 34u
-#define H2 35u
+#define H2 19u
 
 #define PWM_FREQ 1000
 #define PWM_RES 8
@@ -33,7 +32,6 @@
 #define S2_BIT (1<<1)
 #define S3_BIT (1<<2)
 #define S4_BIT (1<<3)
-#define S5_BIT (1<<4)
 
 // Vão ser usados em diferentes eventgroups. É pra dar legal.
 
