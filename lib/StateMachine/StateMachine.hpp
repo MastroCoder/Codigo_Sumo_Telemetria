@@ -1,0 +1,29 @@
+#ifndef LIB_STATE_MACHINE_HPP_
+#define LIB_STATE_MACHINE_HPP_
+
+#include "GlobalDefs.hpp"
+#include <Arduino.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
+#include <map>
+#include <array>
+
+class StateMachine {
+  private:
+    EventBits_t detection_bits;
+    EventBits_t line_bits;
+    EventGroupHandle_t detections = nullptr;
+    EventGroupHandle_t line = nullptr;
+    void UpdateSensorState();
+    void UpdateQTRState();
+  
+  public:
+    States states;
+    unsigned long start_time;
+    StateMachine() = default;
+    StateMachine(EventGroupHandle_t detections_handle, EventGroupHandle_t line_handle);
+    void ResolveIRReceiver(uint16_t command);
+    void UpdateState();
+};
+
+#endif

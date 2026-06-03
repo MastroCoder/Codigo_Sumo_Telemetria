@@ -3,17 +3,23 @@
 #include <sys/unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include "types.hpp"
+#include <Arduino.h>
+#include "mbedtls/base64.h"
 
 class FileHandler {
   private:
     const esp_vfs_littlefs_conf_t *conf;
-    FILE *file;
     
   public:
+    static FILE *file;
     FileHandler(const esp_vfs_littlefs_conf_t *conf);
-    esp_err_t Mount();
-    esp_err_t CreateFile(const char* file_name, const char* op);
-    esp_err_t Write(const char* msg);
+    void Mount();
+    esp_err_t OpenFile(const char* file_name, const char *type);
+    esp_err_t CloseFile();
+    esp_err_t ReadFile(char* buf, int len, long byte_to_read);
+    esp_err_t Write(const char* fmt);
+    char* EncodeFileToBase64();
+    char* EncodeToBase64(char* src, int read_len);
+    // DecodeFromBase64 vai ser desnecessário (espero)
     void Unmount();
 };

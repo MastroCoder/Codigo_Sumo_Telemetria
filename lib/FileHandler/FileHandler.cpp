@@ -1,25 +1,92 @@
 #include "FileHandler.hpp"
 
+FILE * FileHandler::file;
+
 FileHandler::FileHandler(const esp_vfs_littlefs_conf_t *conf){
   this->conf = conf;
 }
 
-// Incluir logging de possíveis erros aqui?
-esp_err_t FileHandler::Mount(){
-  return esp_vfs_littlefs_register(conf);
+void FileHandler::Mount(){
+  esp_err_t err = esp_vfs_littlefs_register(conf);
+  if (err != ESP_OK){
+    switch (err){
+      case ESP_FAIL:
+        Serial.println("Failed to mount LittleFS");
+        break;
+      case ESP_ERR_NOT_FOUND:
+        Serial.println("Failed to find partition");
+        break;
+      default:
+        Serial.println(esp_err_to_name(err));
+        break;
+    }
+  }
 }
 
-esp_err_t FileHandler::CreateFile(const char* file_name, const char* op){
-  file = fopen(file_name, op);
+esp_err_t FileHandler::OpenFile(const char* file_name, const char* type){
+  char *full_name = (char *) calloc((strlen(file_name) + strlen(conf->base_path) + 2), sizeof(char));
+  if (full_name == NULL) return ESP_FAIL;
+  strcat(full_name, conf->base_path);
+  strcat(full_name, "/");
+  strcat(full_name, file_name);
+  Serial.println(full_name);
+  file = fopen(full_name, type);
+  free(full_name);
   if (file == NULL) return ESP_FAIL;
   return ESP_OK;
 }
 
-esp_err_t FileHandler::Write(const char* msg){
-  if (file == NULL) return ESP_ERR_INVALID_STATE;
-  int err = fprintf(file, msg);
-  if (err < 0) return ESP_FAIL;
-  return ESP_OK;
+esp_err_t FileHandler::Write(const char *fmt){
+  if (file != NULL){
+    if (fprintf(file, "%s", fmt) >= 0) return ESP_OK;
+    else return ESP_ERR_INVALID_STATE;
+  }
+  return ESP_ERR_NOT_FOUND;
+}
+
+esp_err_t FileHandler::ReadFile(char *buf, int len, long byte_to_read){
+  if (file != NULL){
+    fseek(file, byte_to_read, SEEK_SET);
+    if (fgets(buf, len, file) != NULL) return ESP_OK;
+    else return ESP_ERR_INVALID_STATE; 
+  }
+  return ESP_FAIL;
+}
+
+esp_err_t FileHandler::CloseFile(){
+  if (file != NULL) {
+    fclose(file);
+    file = NULL;
+    return ESP_OK;
+  }
+  return ESP_ERR_INVALID_STATE;
+}
+
+char* FileHandler::EncodeFileToBase64(){
+  fseek(file, 0, SEEK_END);
+  long file_size = ftell(file);
+  fseek(file, 0, SEEK_SET);
+  char* start_buffer = (char*) malloc((file_size + 1)*sizeof(char));
+  fread(start_buffer, file_size, 1, file);
+  Serial.println(start_buffer);
+  //ReadFile(start_buffer, file_size, 0); // eu acho que vai dar certo, mas dá pra trocar por fread(start_buffer, file_size, 1, file);
+  size_t output_len;
+  mbedtls_base64_encode(NULL, 0, &output_len, (unsigned char*)start_buffer, file_size); // define tamanho necessário para encoding em output_len
+  char* dst = (char*) malloc(sizeof(char)*output_len);
+  int err = mbedtls_base64_encode((unsigned char*) dst, output_len, &output_len, (unsigned char*)start_buffer, file_size);
+  if (err != 0) return NULL;
+  dst[output_len] = '\0';
+  return dst;
+}
+
+char* FileHandler::EncodeToBase64(char *src, int read_len){
+  size_t output_len;
+  mbedtls_base64_encode(NULL, 0, &output_len, (unsigned char*) src, read_len);
+  char* dst = (char*) malloc(sizeof(char) * output_len);
+  int err = mbedtls_base64_encode((unsigned char*) dst, output_len, &output_len, (unsigned char*) src, read_len);
+  if (err != 0) return NULL;
+  dst[output_len] = '\0';
+  return dst;
 }
 
 void FileHandler::Unmount(){
