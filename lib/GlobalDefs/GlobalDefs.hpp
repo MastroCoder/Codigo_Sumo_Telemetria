@@ -33,8 +33,6 @@
 #define S3_BIT (1<<2)
 #define S4_BIT (1<<3)
 
-// Vão ser usados em diferentes eventgroups. É pra dar legal.
-
 #define QTR1_BIT (1<<0)
 #define QTR2_BIT (1<<1)
 
@@ -44,7 +42,7 @@
 #define MAX_HTTP_BUFFER 2048 
 
 enum class RobotTask : unsigned char {
-  kRunMatches = 0x42, // valor arbitrário por agora, pode ser algum botão esotérico no controle remoto
+  kRunMatches = 0x42, 
   kSendData
 };
 

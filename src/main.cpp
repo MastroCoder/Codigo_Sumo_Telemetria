@@ -193,9 +193,23 @@ void FileSendTask(void *pvParameters){
       if (wifi_handle.Connect() == ESP_OK){
         http_handle = HTTPHandler(&http_config);
         char *buf = file_handle.EncodeFileToBase64();
-        if (http_handle.SendTelemetryData(buf) == ESP_OK) http_handle.EndSession();
-        Serial.println("Sent all correctly! Unmounting file system and terminating program...");
-        file_handle.CloseFile();
+        char *send_buf = (char *) calloc(strlen(buf) + 30, sizeof(char));
+        if (buf == NULL || send_buf == NULL) {
+          Serial.println("Couldn't adjust buffer ");
+        }
+        else{
+          strcat(send_buf, "{\"sensors\": \"");
+          strcat(send_buf, buf);
+          strcat(send_buf, "\" }");
+          Serial.println(send_buf);
+          if (http_handle.SendTelemetryData(send_buf) == ESP_OK){
+            Serial.println("Sent all correctly! Unmounting file system and terminating program...");
+          }
+          http_handle.EndSession();
+          file_handle.CloseFile();
+          free(buf);
+          free(send_buf);
+        }
       }
       else{
         Serial.println("Failed to connect. Big whup.");
