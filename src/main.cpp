@@ -46,9 +46,10 @@ HTTPHandler http_handle;
 
 const esp_vfs_littlefs_conf_t vfs_config = {
   .base_path = "/littlefs",
-  .partition_label = "telemetry",
-  .format_if_mount_failed = false,
-  .dont_mount = false
+  .partition_label = "storage",
+  .format_if_mount_failed = true,
+  .dont_mount = false,
+  .grow_on_mount = true
 };
 
 NVSHandler qtr_info = NVSHandler("QTR");
@@ -88,7 +89,9 @@ void setup() {
   Serial.println("Calibrated sensors");
   IrReceiver.begin(IR_PIN, true, LED_BUILTIN);
   IrReceiver.enableIRIn();
-  
+  file_handle.Mount();
+  esp_littlefs_format("storage");
+
   xTaskCreatePinnedToCore(SensorsTask, "sensor_task", MAX_STACK_DEPTH, NULL, 1, &sensing_task_handle, 0);
   xTaskCreatePinnedToCore(MotorsTask, "motors_task", MAX_STACK_DEPTH, NULL, 1, &motor_task_handle, 1);
   xTaskCreatePinnedToCore(TelemetryTask, "telemetry_task", MAX_STACK_DEPTH, NULL, 1, &telemetry_task_handle, 1);
@@ -142,22 +145,24 @@ void TelemetryTask(void *pvParameters){
       if (state_machine.states.robot_task == RobotTask::kRunMatches && 
           state_machine.states.fight_state == FightState::kFighting){
         if (file_handle.file == NULL){
-          if (file_handle.OpenFile("data", "w+") == ESP_OK){
+          if (file_handle.OpenFile("data.csv", "w+") == ESP_OK){
             file_handle.Write("Timestamp,RPM1,RPM2,S1,S2,S3,S4,QTR1,QTR2\n");
           }
+          else Serial.println("Couldn't open file");
         }
         // funções para escrita
         write_buffer = (char*) calloc(buffer_cap, sizeof(char));
         if (write_buffer != NULL) {
           if (PutAllDataInBuffer(&write_buffer) == ESP_OK){
-            file_handle.Write(write_buffer);
+            if (file_handle.Write(write_buffer) == ESP_OK) Serial.print("Written data from buffer: ");
+            else Serial.print("Coudn't write from buffer: ");
             Serial.println(write_buffer);
             free(write_buffer);
           }
         }
       }
       else if (state_machine.states.fight_state == FightState::kStop){
-        file_handle.CloseFile();
+        if (file_handle.CloseFile() == ESP_OK) Serial.println("Closed file");
         Serial.println("Kills task");
         // passar o controle para a tarefa de wifi
         xTaskCreatePinnedToCore(FileSendTask, "file_send_task", MAX_STACK_DEPTH, NULL, 1, &file_send_handle, 1);
@@ -167,11 +172,10 @@ void TelemetryTask(void *pvParameters){
     }
     else{
       if (state_machine.states.fight_state == FightState::kStop){
-        file_handle.CloseFile();
+        if (file_handle.CloseFile() == ESP_OK) Serial.println("Closed file");
         Serial.println("Kills task");
         xTaskCreatePinnedToCore(FileSendTask, "file_send_task", MAX_STACK_DEPTH, NULL, 1, &file_send_handle, 1);
         vTaskDelete(telemetry_task_handle);
-        return;
       }
       else Serial.println("Blocked by Motors Task");
     }
@@ -183,16 +187,25 @@ void FileSendTask(void *pvParameters){
   Serial.println("Entered WiFi task");  
   if (state_machine.states.robot_task == RobotTask::kSendData && 
       state_machine.states.fight_state == FightState::kStop){
-    Serial.println("Trying to send data...");
-    wifi_handle = WiFiHandler(&wifi_config);
-    if (wifi_handle.Connect() == ESP_OK){
-      http_handle = HTTPHandler(&http_config);
-      char *buf = file_handle.EncodeFileToBase64();
-      if (http_handle.SendTelemetryData(buf) == ESP_OK) http_handle.EndSession();
+    if (file_handle.OpenFile("data.csv", "r+") == ESP_OK){
+      Serial.println("Trying to send data...");
+      wifi_handle = WiFiHandler(&wifi_config);
+      if (wifi_handle.Connect() == ESP_OK){
+        http_handle = HTTPHandler(&http_config);
+        char *buf = file_handle.EncodeFileToBase64();
+        if (http_handle.SendTelemetryData(buf) == ESP_OK) http_handle.EndSession();
+        Serial.println("Sent all correctly! Unmounting file system and terminating program...");
+        file_handle.CloseFile();
+      }
+      else{
+        Serial.println("Failed to connect. Big whup.");
+      }
     }
     else{
-      Serial.println("Failed to connect. Big whup.");
+      Serial.println("Failed to open file in read mode. Oh well.");
     }
+
+    file_handle.Unmount();
     vTaskDelete(file_send_handle);
   }
 }

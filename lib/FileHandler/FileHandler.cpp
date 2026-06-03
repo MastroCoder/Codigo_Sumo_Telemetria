@@ -29,6 +29,7 @@ esp_err_t FileHandler::OpenFile(const char* file_name, const char* type){
   strcat(full_name, conf->base_path);
   strcat(full_name, "/");
   strcat(full_name, file_name);
+  Serial.println(full_name);
   file = fopen(full_name, type);
   free(full_name);
   if (file == NULL) return ESP_FAIL;
