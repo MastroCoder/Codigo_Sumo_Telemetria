@@ -24,7 +24,7 @@ void StrategyRunner::SearchLeft(StateMachine &state_machine){
     motor_handle.setSpeeds(speeds.at(MotorSpeeds::kLeftSlow).first, speeds.at(MotorSpeeds::kLeftSlow).second);
   }
   else{
-    while (state_machine.states.fight_state == FightState::kFighting){
+    if (state_machine.states.fight_state == FightState::kFighting){
       FollowEnemy(state_machine);
     }
   }
@@ -36,7 +36,7 @@ void StrategyRunner::SearchRight(StateMachine &state_machine){
     motor_handle.setSpeeds(speeds.at(MotorSpeeds::kRightSlow).first, speeds.at(MotorSpeeds::kRightSlow).second);
   }
   else{
-    while (state_machine.states.fight_state == FightState::kFighting){
+    if (state_machine.states.fight_state == FightState::kFighting){
       FollowEnemy(state_machine);
     }
   }

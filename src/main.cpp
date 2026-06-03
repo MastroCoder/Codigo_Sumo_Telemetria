@@ -15,7 +15,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_littlefs.h>
-#include <IRremote.hpp>
 
 SemaphoreHandle_t motor_telemetry_semaphore = xSemaphoreCreateMutex();
 
@@ -24,6 +23,8 @@ LineDetector line_detector;
 StateMachine state_machine;
 StrategyRunner strategy_runner;
 HallSensorHandler hall_handler = HallSensorHandler();
+
+#include <IRremote.hpp>
 
 wifi_sta_config_t sta_config = {
   WIFI_SSID,
@@ -77,6 +78,7 @@ void setup() {
   Serial.println("Disabled core watchdogs");
   state_machine = StateMachine(enemy_detector.event_group, line_detector.event_group);
   Serial.println("Started detectors");
+  hall_handler.Init();
   Serial.println("Started strategy runner and hall sensor handler");
   
   if (qtr_info.StartStorage(NVS_READWRITE) == ESP_OK){
@@ -112,7 +114,6 @@ void SensorsTask(void *pvParameters){
 void MotorsTask(void *pvParameters){
   for (;;){
     if (xSemaphoreTake(motor_telemetry_semaphore, pdMS_TO_TICKS(30))){
-      Serial.println("Entered MotorTaskLoop");
       if (state_machine.states.robot_task == RobotTask::kRunMatches &&
           state_machine.states.fight_state == FightState::kFighting){
         strategy_runner.RunStrategy(state_machine);
@@ -129,7 +130,7 @@ void MotorsTask(void *pvParameters){
         vTaskDelete(motor_task_handle);
         return;
       }
-      else Serial.println("Still blocked by write.");
+      else Serial.println("Blocked by TelemetryTask.");
     }
     vTaskDelay(pdMS_TO_TICKS(10));
   }
@@ -138,10 +139,8 @@ void MotorsTask(void *pvParameters){
 void TelemetryTask(void *pvParameters){
   for (;;){
     if (xSemaphoreTake(motor_telemetry_semaphore, pdMS_TO_TICKS(30))){
-      Serial.println("Entered TelemetryTaskLoop");
       if (state_machine.states.robot_task == RobotTask::kRunMatches && 
           state_machine.states.fight_state == FightState::kFighting){
-        Serial.println("Entered file handling steps");
         if (file_handle.file == NULL){
           if (file_handle.OpenFile("data", "w+") == ESP_OK){
             file_handle.Write("Timestamp,RPM1,RPM2,S1,S2,S3,S4,QTR1,QTR2\n");
@@ -159,7 +158,7 @@ void TelemetryTask(void *pvParameters){
       }
       else if (state_machine.states.fight_state == FightState::kStop){
         file_handle.CloseFile();
-        Serial.println("Supposedly kills task");
+        Serial.println("Kills task");
         // passar o controle para a tarefa de wifi
         xTaskCreatePinnedToCore(FileSendTask, "file_send_task", MAX_STACK_DEPTH, NULL, 1, &file_send_handle, 1);
         vTaskDelete(telemetry_task_handle);
@@ -169,14 +168,14 @@ void TelemetryTask(void *pvParameters){
     else{
       if (state_machine.states.fight_state == FightState::kStop){
         file_handle.CloseFile();
-        Serial.println("Supposedly kills task");
+        Serial.println("Kills task");
         xTaskCreatePinnedToCore(FileSendTask, "file_send_task", MAX_STACK_DEPTH, NULL, 1, &file_send_handle, 1);
         vTaskDelete(telemetry_task_handle);
         return;
       }
       else Serial.println("Blocked by Motors Task");
     }
-    vTaskDelay(pdMS_TO_TICKS(30));
+    vTaskDelay(pdMS_TO_TICKS(2000));
   }
 }
 
@@ -194,6 +193,7 @@ void FileSendTask(void *pvParameters){
     else{
       Serial.println("Failed to connect. Big whup.");
     }
+    vTaskDelete(file_send_handle);
   }
 }
 
@@ -221,7 +221,9 @@ esp_err_t PutTimestampInBuffer(char **buf){
 
 esp_err_t PutRPMsInBuffer(char **buf){
   std::pair<unsigned int, unsigned int> measurements = hall_handler.CalculateRPM(state_machine.start_time);
+  Serial.print("RPM 1: ");
   Serial.println(measurements.first);
+  Serial.print("RPM 2: ");
   Serial.println(measurements.second);
   char *tmp = (char*) malloc(sizeof(unsigned int) * 4 + 2);
   if (tmp == NULL) return ESP_FAIL;

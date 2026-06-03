@@ -14,6 +14,7 @@ class HallSensorHandler {
     static void IRAM_ATTR IncrementRight();
   public:
     HallSensorHandler();
+    void Init();
     std::pair<unsigned int, unsigned int> CalculateRPM(long state_machine_start_time);
 };
 

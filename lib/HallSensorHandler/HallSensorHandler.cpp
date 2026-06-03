@@ -3,13 +3,13 @@
 volatile unsigned char HallSensorHandler::count_left;
 volatile unsigned char HallSensorHandler::count_right;
 
-HallSensorHandler::HallSensorHandler(){
-  // H1 e H2, se nos GPIOs 34 e 35, necessitam de pullup externo.
-  pinMode(H1, INPUT);
-  pinMode(H2, INPUT);
+HallSensorHandler::HallSensorHandler() = default;
 
-  attachInterrupt(H1, IncrementLeft, RISING);
-  attachInterrupt(H2, IncrementRight, RISING);
+void HallSensorHandler::Init(){
+  pinMode(H1, INPUT_PULLUP);
+  pinMode(H2, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(H1), IncrementLeft, FALLING);
+  attachInterrupt(digitalPinToInterrupt(H2), IncrementRight, FALLING);
   start_time = 0;
 }
 
